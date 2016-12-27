@@ -29,6 +29,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.util.List;
 import java.util.Optional;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -55,28 +56,14 @@ public class EndToEndTest {
 
     @After
     public void tearDown() throws Exception {
-        webDriver.quit();
+        //webDriver.quit();
     }
 
     @Test
     public void testEndtoEnd() throws Exception {
         login("eric", "trey");
-        tryMe("GET", "/musics");
-
-        final WebElement optionsDropdown = webDriver.findElement(By.className("dropdown-primary"));
-        optionsDropdown.click();
-        final Optional<WebElement> oAuth = webDriver.findElements(By.tagName("span"))
-                                                    .stream()
-                                                    .filter(e -> e.getText().equals("Add OAuth 2.0"))
-                                                    .findFirst();
-        assertTrue(oAuth.isPresent());
-        oAuth.ifPresent(WebElement::click);
-
-        final WebElement oAuthFormOptions = getFormSection("oauth").findElement(By.xpath("./div/div/h2/div"));
-        oAuthFormOptions.findElements(By.tagName("li")).forEach((webElement) -> {
-            oAuthFormOptions.click();
-            webElement.click();
-        });
+        tryMe("GET", "/movies");
+        oAuth("imdb", "m0vies", "eric", "trey");
     }
 
     private void login(final String username, final String password) {
@@ -95,12 +82,44 @@ public class EndToEndTest {
         final WebElement getMusics = webDriver.findElement(By.linkText(method + " " + endpoint));
         getMusics.click();
         waitForPageToLoad();
-        assertThat(webDriver.getCurrentUrl(),
-                   containsString("http://registry.superbiz.io:8080/registry/endpoint/Music-API/" + method + endpoint));
+        assertThat(webDriver.getCurrentUrl(), containsString(method + endpoint));
 
         final WebElement tryMe = webDriver.findElement(By.linkText("Try Me"));
         tryMe.click();
         waitForPageToLoad();
+    }
+
+    private void tryMeAdd(final String option) {
+        final WebElement optionsDropdown = webDriver.findElement(By.className("dropdown-primary"));
+        optionsDropdown.click();
+        final Optional<WebElement> oAuth = webDriver.findElements(By.tagName("span"))
+                                                    .stream()
+                                                    .filter(e -> e.getText().equals(option))
+                                                    .findFirst();
+        assertTrue(oAuth.isPresent());
+        oAuth.ifPresent(WebElement::click);
+    }
+
+    private void oAuth(final String clientId, final String clientSecret, final String username, final String password) {
+        tryMeAdd("Add OAuth 2.0");
+
+        final WebElement oAuthForm = getFormSection("oauth");
+
+        final WebElement oAuthFormOptions = oAuthForm.findElement(By.xpath("./div/div/h2/div"));
+        oAuthFormOptions.findElements(By.tagName("li")).forEach((webElement) -> {
+            oAuthFormOptions.click();
+            webElement.click();
+        });
+
+        final List<WebElement> inputs = oAuthForm.findElements(By.tagName("input"));
+        // clientId
+        inputs.get(2).sendKeys(clientId);
+        // clientSecret
+        inputs.get(3).sendKeys(clientSecret);
+        // username
+        inputs.get(4).sendKeys(username);
+        // password
+        inputs.get(5).sendKeys(password);
     }
 
     private WebElement getFormSection(final String name) {
