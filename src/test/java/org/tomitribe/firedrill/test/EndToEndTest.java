@@ -52,11 +52,10 @@ public class EndToEndTest {
         final Result result = Registry.registry("http://registry.superbiz.io:8080/registry", webDriver)
                                       .login("eric", "trey")
                                       .tryMe("GET", "/movies")
+                                      .removeAllQueryParameters()
                                       .oAuth("imdb", "m0vies", "eric", "trey")
                                       .addQueryParam("first", "1")
                                       .addQueryParam("max", "10")
-                                      .removeParameter("field")
-                                      .removeParameter("searchTerm")
                                       .invoke();
 
         assertEquals(200, result.getStatusCode());
@@ -67,10 +66,10 @@ public class EndToEndTest {
         final Result result = Registry.registry("http://registry.superbiz.io:8080/registry", webDriver)
                                       .login("eric", "trey")
                                       .tryMe("GET", "/musics")
+                                      .removeAllQueryParameters()
                                       .signature("eric:eric1", "parker")
                                       .withDigest("sha-256")
                                       .withDate()
-                                      .removeAllQueryParameters()
                                       .invoke();
 
         assertEquals(200, result.getStatusCode());

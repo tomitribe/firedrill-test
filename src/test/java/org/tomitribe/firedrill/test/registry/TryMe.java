@@ -19,7 +19,6 @@ package org.tomitribe.firedrill.test.registry;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
@@ -87,29 +86,12 @@ public class TryMe {
     }
 
     public TryMe addHeader(final String name, final String value) {
-        addParameter(HEADER);
-        final WebElement headerSelect = getParameterRow("").orElseThrow(IllegalStateException::new).findElement(
-                xpath("./td[1]/div/div[contains(@class, 'selectize-input')]"));
-        headerSelect.click();
-        headerSelect.findElement(
-                xpath(format("./following-sibling::div/div/div/div[div/div[text() = '%s']]", name)))
-                    .click();
-        addHeaderValue(name, value);
-
+        addParameter(HEADER, name, value);
         return this;
     }
 
     public TryMe addQueryParam(final String name, final String value) {
-        if (getParameterRow(name).isPresent()) {
-            addParameter(QUERY);
-        }
-
-        final WebElement parameterRow = getParameterRow(name).orElseThrow(IllegalStateException::new);
-        final WebElement parameterInput =
-                parameterRow.findElement(xpath("./td[6]//div/div[contains(@class, 'selectize-input')]"));
-        parameterInput.click();
-        parameterInput.findElement(xpath(".//input")).sendKeys(value, RETURN);
-
+        addParameter(QUERY, name, value);
         return this;
     }
 
@@ -132,7 +114,7 @@ public class TryMe {
 
     public TryMe withDigest(final String algorithm) {
         addOption(DIGEST);
-        addHeaderValue("Digest", algorithm);
+        addParameterValue("Digest", algorithm);
         signParameter("Digest");
         return this;
     }
@@ -187,24 +169,49 @@ public class TryMe {
         }
     }
 
-    private void addParameter(final Parameter parameter) {
-        final WebElement parametersDropdown = getParametersDropdown();
-        parametersDropdown.click();
-        selectDropdownOption(parametersDropdown, parameter.getLabel());
+    private void addParameter(final Parameter parameter, final String name, final String value) {
+        if (!getParameterRow(name).isPresent()) {
+            final WebElement parametersDropdown = getParametersDropdown();
+            parametersDropdown.click();
+            selectDropdownOption(parametersDropdown, parameter.getLabel());
+            addParameterName(name);
+        }
+        addParameterValue(name, value);
+    }
+
+    private void addParameterName(final String name) {
+        final WebElement parameterRow = getParameterRow("").orElseThrow(IllegalStateException::new);
+        final WebElement parameterNameInput =
+                parameterRow.findElement(xpath("./td[1]/div/div[contains(@class, 'selectize-input')]"));
+        parameterNameInput.click();
+
+        try {
+            parameterNameInput.findElement(
+                    xpath(format("./following-sibling::div/div/div/div[div/div[text() = '%s']]", name))).click();
+        } catch (Exception e) {
+            parameterNameInput.findElement(
+                    xpath(".//input")).sendKeys(name, RETURN);
+        }
+    }
+
+    private void addParameterValue(final String name, final String value) {
+        final WebElement parameterRow = getParameterRow(name).orElseThrow(IllegalStateException::new);
+        final WebElement parameterValueInput =
+                parameterRow.findElement(xpath("./td[6]//div/div[contains(@class, 'selectize-input')]"));
+        parameterValueInput.click();
+
+
+        try {
+            parameterValueInput.findElement(
+                    xpath(format("./following-sibling::div/div/div/div[div/div[contains(text(), '%s')]]", value)))
+                       .click();
+        } catch (Exception e) {
+            parameterValueInput.findElement(xpath(".//input")).sendKeys(value, RETURN);
+        }
     }
 
     private void signParameter(final String name) {
         getParameterRow(name).ifPresent(e -> e.findElement(xpath("./td[7]/i/div/div")).click());
-    }
-
-    private void addHeaderValue(final String header, final String value) {
-        final WebElement parameterRow = getParameterRow(header).orElseThrow(IllegalStateException::new);
-        final WebElement valueSelect = parameterRow.findElement(
-                xpath("./td[6]//div/div[contains(@class, 'selectize-input')]"));
-        valueSelect.click();
-        valueSelect.findElement(
-                xpath(format("./following-sibling::div/div/div/div[div/div[contains(text(), '%s')]]", value)))
-                   .click();
     }
 
     private void action(final Action action) {
