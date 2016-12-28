@@ -44,7 +44,7 @@ public class EndToEndTest {
 
     @After
     public void tearDown() throws Exception {
-        webDriver.quit();
+        //webDriver.quit();
     }
 
     @Test
@@ -57,5 +57,15 @@ public class EndToEndTest {
                                       .invoke();
 
         assertEquals(200, result.getStatusCode());
+    }
+
+    @Test
+    public void testSignature() throws Exception {
+        Registry.registry("http://registry.superbiz.io:8080/registry", webDriver)
+                .login("eric", "trey")
+                .tryMe("GET", "/musics")
+                .signature("eric:eric1", "parker")
+                .withDigest()
+                .removeAllQueryParameters();
     }
 }
