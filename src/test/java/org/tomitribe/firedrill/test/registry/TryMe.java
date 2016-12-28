@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static java.lang.String.format;
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang3.StringUtils.contains;
 import static org.junit.Assert.assertTrue;
 import static org.openqa.selenium.By.className;
@@ -67,12 +68,24 @@ public class TryMe {
         return this;
     }
 
-    public TryMe removeQueryParameter(final String name) {
+    public TryMe removeParameter(final String name) {
         final WebElement parameter = webDriver.findElement(xpath(format(
                 "//div[@class='parameters']/div/div/table/tbody/tr[td/div/div/div/span/span[contains(text(), '%s')]]",
                 name)));
         parameter.findElement(xpath("./td[last()]/div/i")).click();
 
+        return this;
+    }
+
+    public TryMe removeAllQueryParameters() {
+        final List<String> queryParameters =
+                webDriver.findElements(
+                        xpath("//div[@class='parameters']/div/div/table/tbody/tr[td/div[text() = 'query']]"))
+                         .stream()
+                         .map(p -> p.findElement(xpath("./td[1]/div/div/div/span/span")).getText())
+                         .collect(toList());
+
+        queryParameters.forEach(this::removeParameter);
         return this;
     }
 
