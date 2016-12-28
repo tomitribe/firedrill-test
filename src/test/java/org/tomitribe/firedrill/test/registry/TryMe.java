@@ -19,6 +19,7 @@ package org.tomitribe.firedrill.test.registry;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
@@ -32,12 +33,14 @@ import static org.junit.Assert.assertTrue;
 import static org.openqa.selenium.By.className;
 import static org.openqa.selenium.By.tagName;
 import static org.openqa.selenium.By.xpath;
+import static org.openqa.selenium.Keys.RETURN;
 import static org.tomitribe.firedrill.test.driver.WebDriverUtils.waitForPageToLoad;
 import static org.tomitribe.firedrill.test.registry.TryMe.Action.INVOKE;
 import static org.tomitribe.firedrill.test.registry.TryMe.Option.DIGEST;
 import static org.tomitribe.firedrill.test.registry.TryMe.Option.OAUTH;
 import static org.tomitribe.firedrill.test.registry.TryMe.Option.SIGNATURE;
 import static org.tomitribe.firedrill.test.registry.TryMe.Parameter.HEADER;
+import static org.tomitribe.firedrill.test.registry.TryMe.Parameter.QUERY;
 
 /**
  * @author Roberto Cortez
@@ -85,7 +88,7 @@ public class TryMe {
 
     public TryMe addHeader(final String name, final String value) {
         addParameter(HEADER);
-        final WebElement headerSelect = getParameterRow("").findElement(
+        final WebElement headerSelect = getParameterRow("").orElseThrow(IllegalStateException::new).findElement(
                 xpath("./td[1]/div/div[contains(@class, 'selectize-input')]"));
         headerSelect.click();
         headerSelect.findElement(
@@ -96,8 +99,22 @@ public class TryMe {
         return this;
     }
 
+    public TryMe addQueryParam(final String name, final String value) {
+        if (getParameterRow(name).isPresent()) {
+            addParameter(QUERY);
+        }
+
+        final WebElement parameterRow = getParameterRow(name).orElseThrow(IllegalStateException::new);
+        final WebElement parameterInput =
+                parameterRow.findElement(xpath("./td[6]//div/div[contains(@class, 'selectize-input')]"));
+        parameterInput.click();
+        parameterInput.findElement(xpath(".//input")).sendKeys(value, RETURN);
+
+        return this;
+    }
+
     public TryMe removeParameter(final String name) {
-        getParameterRow(name).findElement(xpath("./td[last()]/div/i")).click();
+        getParameterRow(name).ifPresent(e -> e.findElement(xpath("./td[last()]/div/i")).click());
         return this;
     }
 
@@ -158,11 +175,16 @@ public class TryMe {
         return formSection.get();
     }
 
-    private WebElement getParameterRow(final String name) {
-        return webDriver.findElement(xpath(format(
-                "//div[@class='parameters']/div/div/table/tbody" +
-                "/tr[td[1]/div/div/div/span/following-sibling::span/span[text() = '%s']]",
-                name)));
+    private Optional<WebElement> getParameterRow(final String name) {
+        try {
+            final WebElement element = webDriver.findElement(xpath(format(
+                    "//div[@class='parameters']/div/div/table/tbody" +
+                    "/tr[td[1]/div/div/div/span/following-sibling::span/span[text() = '%s']]",
+                    name)));
+            return Optional.of(element);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     private void addParameter(final Parameter parameter) {
@@ -172,11 +194,11 @@ public class TryMe {
     }
 
     private void signParameter(final String name) {
-        getParameterRow(name).findElement(xpath("./td[7]/i/div/div")).click();
+        getParameterRow(name).ifPresent(e -> e.findElement(xpath("./td[7]/i/div/div")).click());
     }
 
     private void addHeaderValue(final String header, final String value) {
-        final WebElement parameterRow = getParameterRow(header);
+        final WebElement parameterRow = getParameterRow(header).orElseThrow(IllegalStateException::new);
         final WebElement valueSelect = parameterRow.findElement(
                 xpath("./td[6]//div/div[contains(@class, 'selectize-input')]"));
         valueSelect.click();
@@ -205,7 +227,7 @@ public class TryMe {
 
     @AllArgsConstructor
     @Getter
-    public enum Option {
+    enum Option {
         OAUTH("Add OAuth 2.0"),
         SIGNATURE("Add HTTP Signature"),
         DIGEST("Add Digest")
@@ -216,7 +238,7 @@ public class TryMe {
 
     @AllArgsConstructor
     @Getter
-    public enum Parameter {
+    enum Parameter {
         HEADER("Add Header"),
         PATH("Add Path Parameter"),
         QUERY("Add Query Parameter")
@@ -228,7 +250,7 @@ public class TryMe {
 
     @AllArgsConstructor
     @Getter
-    public enum Action {
+    enum Action {
         INVOKE("Invoke")
         ;
 

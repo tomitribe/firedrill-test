@@ -53,7 +53,10 @@ public class EndToEndTest {
                                       .login("eric", "trey")
                                       .tryMe("GET", "/movies")
                                       .oAuth("imdb", "m0vies", "eric", "trey")
-                                      .removeAllQueryParameters()
+                                      .addQueryParam("first", "1")
+                                      .addQueryParam("max", "10")
+                                      .removeParameter("field")
+                                      .removeParameter("searchTerm")
                                       .invoke();
 
         assertEquals(200, result.getStatusCode());
