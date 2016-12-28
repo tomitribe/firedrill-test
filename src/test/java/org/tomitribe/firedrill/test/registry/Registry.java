@@ -45,6 +45,7 @@ public class Registry {
     }
 
     public TryMe tryMe(final String method, final String endpoint) {
+        // TODO - Won't work on paginated version. Fix.
         webDriver.findElement(linkText(method + " " + endpoint)).click();
         waitForPageToLoad(webDriver);
 

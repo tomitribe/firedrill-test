@@ -37,6 +37,7 @@ import static org.tomitribe.firedrill.test.registry.TryMe.Action.INVOKE;
 import static org.tomitribe.firedrill.test.registry.TryMe.Option.DIGEST;
 import static org.tomitribe.firedrill.test.registry.TryMe.Option.OAUTH;
 import static org.tomitribe.firedrill.test.registry.TryMe.Option.SIGNATURE;
+import static org.tomitribe.firedrill.test.registry.TryMe.Parameter.HEADER;
 
 /**
  * @author Roberto Cortez
@@ -82,6 +83,17 @@ public class TryMe {
         return this;
     }
 
+    public TryMe addHeader(final String name) {
+        addParameter(HEADER);
+        final WebElement headerSelect = getParameterRow("").findElement(
+                xpath("./td[1]/div/div[contains(@class, 'selectize-input')]"));
+        headerSelect.click();
+        headerSelect.findElement(xpath(format("./following-sibling::div/div/div/div[div/div[text() = '%s']]", name)))
+                    .click();
+
+        return this;
+    }
+
     public TryMe removeParameter(final String name) {
         getParameterRow(name).findElement(xpath("./td[last()]/div/i")).click();
         return this;
@@ -105,12 +117,27 @@ public class TryMe {
         return this;
     }
 
+    public TryMe withDate() {
+        addHeader("Date");
+        signParameter("Date");
+        return this;
+    }
+
     public Result invoke() {
         action(INVOKE);
         return Result.result(getStatusCode());
     }
 
+    private WebElement getParametersDropdown() {
+        return webDriver.findElement(xpath("//div[@class='parameters']//div[contains(@class, 'dropdown-primary')]"));
+    }
+
+    private void selectDropdownOption(final WebElement webElement, final String label) {
+        webElement.findElement(xpath(format("./following-sibling::div/span/div[text() = '%s']", label))).click();
+    }
+
     private void addOption(final Option option) {
+        // TODO - Other dropdowns share the same classname. This works because it's the first. Fix.
         webDriver.findElement(className("dropdown-primary")).click();
         webDriver.findElements(tagName("span"))
                  .stream()
@@ -130,8 +157,15 @@ public class TryMe {
 
     private WebElement getParameterRow(final String name) {
         return webDriver.findElement(xpath(format(
-                "//div[@class='parameters']/div/div/table/tbody/tr[td[1]/div/div/div/span/span[contains(text(), '%s')]]",
+                "//div[@class='parameters']/div/div/table/tbody" +
+                "/tr[td[1]/div/div/div/span/following-sibling::span/span[text() = '%s']]",
                 name)));
+    }
+
+    private void addParameter(final Parameter parameter) {
+        final WebElement parametersDropdown = getParametersDropdown();
+        parametersDropdown.click();
+        selectDropdownOption(parametersDropdown, parameter.getLabel());
     }
 
     private void signParameter(final String name) {
@@ -166,6 +200,18 @@ public class TryMe {
 
         private String label;
     }
+
+    @AllArgsConstructor
+    @Getter
+    public enum Parameter {
+        HEADER("Add Header"),
+        PATH("Add Path Parameter"),
+        QUERY("Add Query Parameter")
+        ;
+
+        private String label;
+    }
+
 
     @AllArgsConstructor
     @Getter

@@ -66,6 +66,7 @@ public class EndToEndTest {
                 .tryMe("GET", "/musics")
                 .signature("eric:eric1", "parker")
                 .withDigest()
+                .withDate()
                 .removeAllQueryParameters();
     }
 }
