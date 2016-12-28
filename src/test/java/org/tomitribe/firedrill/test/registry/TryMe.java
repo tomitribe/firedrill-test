@@ -85,21 +85,13 @@ public class TryMe {
 
     public TryMe addHeader(final String name, final String value) {
         addParameter(HEADER);
-        final WebElement parameterRow = getParameterRow("");
-
-        final WebElement headerSelect = parameterRow.findElement(
+        final WebElement headerSelect = getParameterRow("").findElement(
                 xpath("./td[1]/div/div[contains(@class, 'selectize-input')]"));
         headerSelect.click();
         headerSelect.findElement(
                 xpath(format("./following-sibling::div/div/div/div[div/div[text() = '%s']]", name)))
                     .click();
-
-        final WebElement valueSelect = parameterRow.findElement(
-                xpath("./td[6]/div/div[contains(@class, 'selectize-input')]"));
-        valueSelect.click();
-        valueSelect.findElement(
-                xpath(format("./following-sibling::div/div/div/div[div/div[contains(text(), '%s')]]", value)))
-                    .click();
+        addHeaderValue(name, value);
 
         return this;
     }
@@ -121,8 +113,9 @@ public class TryMe {
         return this;
     }
 
-    public TryMe withDigest() {
+    public TryMe withDigest(final String algorithm) {
         addOption(DIGEST);
+        addHeaderValue("Digest", algorithm);
         signParameter("Digest");
         return this;
     }
@@ -180,6 +173,16 @@ public class TryMe {
 
     private void signParameter(final String name) {
         getParameterRow(name).findElement(xpath("./td[7]/i/div/div")).click();
+    }
+
+    private void addHeaderValue(final String header, final String value) {
+        final WebElement parameterRow = getParameterRow(header);
+        final WebElement valueSelect = parameterRow.findElement(
+                xpath("./td[6]//div/div[contains(@class, 'selectize-input')]"));
+        valueSelect.click();
+        valueSelect.findElement(
+                xpath(format("./following-sibling::div/div/div/div[div/div[contains(text(), '%s')]]", value)))
+                   .click();
     }
 
     private void action(final Action action) {
