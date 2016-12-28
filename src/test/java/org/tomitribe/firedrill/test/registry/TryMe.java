@@ -83,12 +83,22 @@ public class TryMe {
         return this;
     }
 
-    public TryMe addHeader(final String name) {
+    public TryMe addHeader(final String name, final String value) {
         addParameter(HEADER);
-        final WebElement headerSelect = getParameterRow("").findElement(
+        final WebElement parameterRow = getParameterRow("");
+
+        final WebElement headerSelect = parameterRow.findElement(
                 xpath("./td[1]/div/div[contains(@class, 'selectize-input')]"));
         headerSelect.click();
-        headerSelect.findElement(xpath(format("./following-sibling::div/div/div/div[div/div[text() = '%s']]", name)))
+        headerSelect.findElement(
+                xpath(format("./following-sibling::div/div/div/div[div/div[text() = '%s']]", name)))
+                    .click();
+
+        final WebElement valueSelect = parameterRow.findElement(
+                xpath("./td[6]/div/div[contains(@class, 'selectize-input')]"));
+        valueSelect.click();
+        valueSelect.findElement(
+                xpath(format("./following-sibling::div/div/div/div[div/div[contains(text(), '%s')]]", value)))
                     .click();
 
         return this;
@@ -118,7 +128,7 @@ public class TryMe {
     }
 
     public TryMe withDate() {
-        addHeader("Date");
+        addHeader("Date", " ");
         signParameter("Date");
         return this;
     }
