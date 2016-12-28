@@ -22,7 +22,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -32,12 +31,18 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.util.List;
 import java.util.Optional;
 
+import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.apache.commons.lang3.StringUtils.contains;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.openqa.selenium.By.className;
+import static org.openqa.selenium.By.linkText;
+import static org.openqa.selenium.By.name;
+import static org.openqa.selenium.By.tagName;
+import static org.openqa.selenium.By.xpath;
 import static org.openqa.selenium.support.ui.ExpectedConditions.jsReturnsValue;
 
 /**
@@ -51,7 +56,7 @@ public class EndToEndTest {
     public void setUp() throws Exception {
         System.setProperty("webdriver.chrome.driver", "/Users/radcortez/Downloads/chromedriver");
         webDriver = new ChromeDriver();
-        webDriver.manage().timeouts().setScriptTimeout(10, SECONDS);
+        webDriver.manage().timeouts().setScriptTimeout(30, SECONDS);
     }
 
     @After
@@ -64,14 +69,22 @@ public class EndToEndTest {
         login("eric", "trey");
         tryMe("GET", "/movies");
         oAuth("imdb", "m0vies", "eric", "trey");
+
+        removeQueryParameter("first");
+        removeQueryParameter("max");
+        removeQueryParameter("field");
+        removeQueryParameter("searchTerm");
+
+        tryMeAction("Invoke");
+        statusCode(200);
     }
 
     private void login(final String username, final String password) {
         webDriver.get("http://registry.superbiz.io:8080/registry/login");
 
-        final WebElement formUsername = webDriver.findElement(By.name("username"));
+        final WebElement formUsername = webDriver.findElement(name("username"));
         formUsername.sendKeys(username);
-        webDriver.findElement(By.name("password")).sendKeys(password);
+        webDriver.findElement(name("password")).sendKeys(password);
         formUsername.submit();
 
         waitForPageToLoad();
@@ -79,20 +92,20 @@ public class EndToEndTest {
     }
 
     private void tryMe(final String method, final String endpoint) {
-        final WebElement getMusics = webDriver.findElement(By.linkText(method + " " + endpoint));
+        final WebElement getMusics = webDriver.findElement(linkText(method + " " + endpoint));
         getMusics.click();
         waitForPageToLoad();
         assertThat(webDriver.getCurrentUrl(), containsString(method + endpoint));
 
-        final WebElement tryMe = webDriver.findElement(By.linkText("Try Me"));
+        final WebElement tryMe = webDriver.findElement(linkText("Try Me"));
         tryMe.click();
         waitForPageToLoad();
     }
 
     private void tryMeAdd(final String option) {
-        final WebElement optionsDropdown = webDriver.findElement(By.className("dropdown-primary"));
+        final WebElement optionsDropdown = webDriver.findElement(className("dropdown-primary"));
         optionsDropdown.click();
-        final Optional<WebElement> oAuth = webDriver.findElements(By.tagName("span"))
+        final Optional<WebElement> oAuth = webDriver.findElements(tagName("span"))
                                                     .stream()
                                                     .filter(e -> e.getText().equals(option))
                                                     .findFirst();
@@ -100,18 +113,25 @@ public class EndToEndTest {
         oAuth.ifPresent(WebElement::click);
     }
 
+    private void tryMeAction(final String action) {
+        webDriver.findElement(xpath("//div[@class='bolt-button']/div/div")).click();
+        webDriver.findElement(xpath(format("//div[@class='bolt-button']/div/div/a[div[text() = '%s']]", action)))
+                 .click();
+        new NgWebDriver((JavascriptExecutor) webDriver).waitForAngularRequestsToFinish();
+    }
+
     private void oAuth(final String clientId, final String clientSecret, final String username, final String password) {
         tryMeAdd("Add OAuth 2.0");
 
         final WebElement oAuthForm = getFormSection("oauth");
 
-        final WebElement oAuthFormOptions = oAuthForm.findElement(By.xpath("./div/div/h2/div"));
-        oAuthFormOptions.findElements(By.tagName("li")).forEach((webElement) -> {
+        final WebElement oAuthFormOptions = oAuthForm.findElement(xpath("./div/div/h2/div"));
+        oAuthFormOptions.findElements(tagName("li")).forEach((webElement) -> {
             oAuthFormOptions.click();
             webElement.click();
         });
 
-        final List<WebElement> inputs = oAuthForm.findElements(By.tagName("input"));
+        final List<WebElement> inputs = oAuthForm.findElements(tagName("input"));
         // clientId
         inputs.get(2).sendKeys(clientId);
         // clientSecret
@@ -123,12 +143,24 @@ public class EndToEndTest {
     }
 
     private WebElement getFormSection(final String name) {
-        final Optional<WebElement> formSection = webDriver.findElements(By.className("form-line"))
+        final Optional<WebElement> formSection = webDriver.findElements(className("form-line"))
                                                           .stream()
                                                           .filter(e -> contains(e.getAttribute("ng-if"), name))
                                                           .findFirst();
         assertTrue(formSection.isPresent());
         return formSection.get();
+    }
+
+    private void removeQueryParameter(final String name) {
+        final WebElement parameter = webDriver.findElement(xpath(format(
+                "//div[@class='parameters']/div/div/table/tbody/tr[td/div/div/div/span/span[contains(text(), '%s')]]",
+                name)));
+        parameter.findElement(xpath("./td[last()]/div/i")).click();
+    }
+
+    private void statusCode(final int statusCode) {
+        assertEquals(String.valueOf(statusCode), webDriver.findElement(
+                xpath("//div[@class='response']//h3[text() = 'Status code']/following-sibling::div/span")).getText());
     }
 
     private void waitForPageToLoad() {
