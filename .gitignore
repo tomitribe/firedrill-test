@@ -29,3 +29,6 @@ release.properties
 glslogs/
 *.log
 /bin/
+
+src/test/resources/selenium/bin
+src/test/resources/selenium/zip

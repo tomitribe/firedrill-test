@@ -54,14 +54,13 @@ public class EndToEndTest {
 
     @Before
     public void setUp() throws Exception {
-        System.setProperty("webdriver.chrome.driver", "/Users/radcortez/Downloads/chromedriver");
         webDriver = new ChromeDriver();
         webDriver.manage().timeouts().setScriptTimeout(30, SECONDS);
     }
 
     @After
     public void tearDown() throws Exception {
-        //webDriver.quit();
+        webDriver.quit();
     }
 
     @Test
