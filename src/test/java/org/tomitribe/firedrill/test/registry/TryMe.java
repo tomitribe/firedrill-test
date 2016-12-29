@@ -39,6 +39,7 @@ import static org.tomitribe.firedrill.test.registry.TryMe.Option.DIGEST;
 import static org.tomitribe.firedrill.test.registry.TryMe.Option.OAUTH;
 import static org.tomitribe.firedrill.test.registry.TryMe.Option.SIGNATURE;
 import static org.tomitribe.firedrill.test.registry.TryMe.Parameter.HEADER;
+import static org.tomitribe.firedrill.test.registry.TryMe.Parameter.PATH;
 import static org.tomitribe.firedrill.test.registry.TryMe.Parameter.QUERY;
 
 /**
@@ -50,6 +51,7 @@ public class TryMe {
 
     public TryMe oAuth(final String clientId, final String clientSecret,
                        final String username, final String password) {
+        removeParameter("http signature");
         addOption(OAUTH);
 
         final WebElement oAuthForm = getFormSection("oauth");
@@ -73,6 +75,7 @@ public class TryMe {
     }
 
     public TryMe signature(final String keyId, final String key) {
+        removeParameter("Authorization");
         addOption(SIGNATURE);
 
         final WebElement signatureForm = getFormSection("signature");
@@ -87,6 +90,11 @@ public class TryMe {
 
     public TryMe addHeader(final String name, final String value) {
         addParameter(HEADER, name, value);
+        return this;
+    }
+
+    public TryMe addPathParam(final String name, final String value) {
+        addParameter(PATH, name, value);
         return this;
     }
 
@@ -159,11 +167,10 @@ public class TryMe {
 
     private Optional<WebElement> getParameterRow(final String name) {
         try {
-            final WebElement element = webDriver.findElement(xpath(format(
+            return webDriver.findElements(xpath(format(
                     "//div[@class='parameters']/div/div/table/tbody" +
                     "/tr[td[1]/div/div/div/span/following-sibling::span/span[text() = '%s']]",
-                    name)));
-            return Optional.of(element);
+                    name))).stream().filter(WebElement::isDisplayed).findFirst();
         } catch (Exception e) {
             return Optional.empty();
         }

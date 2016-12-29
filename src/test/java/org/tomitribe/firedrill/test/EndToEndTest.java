@@ -74,4 +74,19 @@ public class EndToEndTest {
 
         assertEquals(200, result.getStatusCode());
     }
+
+    @Test
+    public void testOAuthAndSignature() throws Exception {
+        final Result result = Registry.registry("http://registry.superbiz.io:8080/registry", webDriver)
+                                      .login("eric", "trey")
+                                      .tryMe("GET", "/books/{id}")
+                                      .addPathParam("id", "1")
+                                      .oAuth("imdb", "m0vies", "eric", "trey")
+                                      .signature("eric:eric1", "parker")
+                                      .withDigest("sha-256")
+                                      .withDate()
+                                      .invoke();
+
+        assertEquals(200, result.getStatusCode());
+    }
 }
