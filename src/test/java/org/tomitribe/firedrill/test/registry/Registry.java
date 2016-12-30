@@ -20,6 +20,8 @@ import lombok.AllArgsConstructor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 
+import java.util.StringJoiner;
+
 import static org.openqa.selenium.By.linkText;
 import static org.openqa.selenium.By.name;
 import static org.tomitribe.firedrill.test.driver.WebDriverUtils.waitForPageToLoad;
@@ -44,9 +46,10 @@ public class Registry {
         return this;
     }
 
-    public TryMe tryMe(final String method, final String endpoint) {
-        // TODO - Won't work on paginated version. Fix.
-        webDriver.findElement(linkText(method + " " + endpoint)).click();
+    public TryMe tryMe(final String application, final String method, final String path, final String version) {
+        webDriver.get(new StringJoiner("/").add(url).add("endpoint").add(application).add(method).add(path).toString() +
+                      "?version=" +
+                      version);
         waitForPageToLoad(webDriver);
 
         webDriver.findElement(linkText("Try Me")).click();

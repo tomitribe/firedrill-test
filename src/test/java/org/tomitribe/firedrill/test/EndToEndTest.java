@@ -39,7 +39,7 @@ public class EndToEndTest {
     @Before
     public void setUp() throws Exception {
         webDriver = new ChromeDriver();
-        webDriver.manage().timeouts().setScriptTimeout(30, SECONDS);
+        webDriver.manage().timeouts().setScriptTimeout(60, SECONDS);
     }
 
     @After
@@ -51,7 +51,7 @@ public class EndToEndTest {
     public void testOAuth() throws Exception {
         final Result result = Registry.registry("http://registry.superbiz.io:8080/registry", webDriver)
                                       .login("eric", "trey")
-                                      .tryMe("GET", "/movies")
+                                      .tryMe("Movie-API", "GET", "/movies", "1.0")
                                       .removeAllQueryParameters()
                                       .oAuth("imdb", "m0vies", "eric", "trey")
                                       .addQueryParam("first", "1")
@@ -65,7 +65,7 @@ public class EndToEndTest {
     public void testSignature() throws Exception {
         final Result result = Registry.registry("http://registry.superbiz.io:8080/registry", webDriver)
                                       .login("eric", "trey")
-                                      .tryMe("GET", "/musics")
+                                      .tryMe("Music-API", "GET", "/musics", "1.0")
                                       .removeAllQueryParameters()
                                       .signature("eric:eric1", "parker")
                                       .withDigest("sha-256")
@@ -79,7 +79,7 @@ public class EndToEndTest {
     public void testOAuthAndSignature() throws Exception {
         final Result result = Registry.registry("http://registry.superbiz.io:8080/registry", webDriver)
                                       .login("eric", "trey")
-                                      .tryMe("GET", "/books/{id}")
+                                      .tryMe("Books-API", "GET", "/books/:id", "1.0")
                                       .addPathParam("id", "1")
                                       .oAuth("imdb", "m0vies", "eric", "trey")
                                       .signature("eric:eric1", "parker")
